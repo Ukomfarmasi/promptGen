@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Generator v4.1 — Auto Save + Upload + Download + Dark Mode</title>
+  <style>
+    :root {
+      --bg-light: linear-gradient(135deg, #00bcd4, #8bc34a);
+      --bg-dark: linear-gradient(135deg, #263238, #37474f);
+      --card-light: rgba(255,255,255,0.15);
+      --card-dark: rgba(0,0,0,0.35);
+      --text-light: #fff;
+      --text-dark: #000;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      margin: 0;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-light);
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    form {
+      background: var(--card-light);
+      border-radius: 15px;
+      padding: 20px;
+      max-width: 750px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background 0.3s;
+    }
+    body.dark form {
+      background: var(--card-dark);
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 12px;
+    }
+    textarea, select, input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      color: #000;
+    }
+    input[type="file"] {
+      margin-top: 8px;
+      color: #fff;
+    }
+    button {
+      background-color: #004d40;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 20px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #00695c;
+    }
+    #output {
+      margin-top: 30px;
+      white-space: pre-wrap;
+      background: #fff;
+      color: #000;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .preview img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .topbar {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .toggle-theme {
+      background: #212121;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <button class="toggle-theme" onclick="toggleTheme()">?? Ubah Tema</button>
+  </div>
+  <h1>?? Prompt Generator v4.1</h1>
+
+  <form id="promptForm">
+    <label>1?? Topik utama:</label>
+    <input type="text" id="topik" placeholder="contoh: OSN Matematika SD / Google Sheets / Psikologi kerja shift" />
+
+    <label>2?? Tujuan utama:</label>
+    <input type="text" id="tujuan" placeholder="contoh: menjelaskan / membuat / menganalisis / membangun" />
+
+    <label>3?? Gaya penjelasan:</label>
+    <input type="text" id="gaya" placeholder="contoh: rinci, santai, seperti ahli, dengan contoh nyata" />
+
+    <label>4?? Format hasil:</label>
+    <input type="text" id="format" placeholder="contoh: teks biasa / tabel / file HTML / Excel" />
+
+    <label>5?? Bahasa & nada:</label>
+    <select id="bahasa">
+      <option>Bahasa Indonesia formal</option>
+      <option>Bahasa Indonesia santai</option>
+      <option>Bilingual (Indonesia–Inggris)</option>
+      <option>Bahasa Inggris akademik</option>
+    </select>
+
+    <label>6?? Tingkat kedalaman:</label>
+    <select id="tingkat">
+      <option>Dasar</option>
+      <option>Menengah</option>
+      <option>Ahli</option>
+      <option>Profesional</option>
+      <option>OSN</option>
+      <option>Riset Ilmiah</option>
+    </select>
+
+    <label>7?? Tambahan khusus:</label>
+    <textarea id="tambahan" rows="2" placeholder="contoh: tambahkan contoh kasus, tips praktis, visualisasi, data dummy"></textarea>
+
+    <label>8?? Harapan akhir hasil:</label>
+    <textarea id="harapan" rows="2" placeholder="contoh: hasil langsung bisa dipakai, siap presentasi, tanpa revisi besar"></textarea>
+
+    <label>9?? Upload gambar (opsional):</label>
+    <input type="file" id="gambar" accept="image/*" />
+    <div class="preview" id="preview"></div>
+
+    <label>?? Perlu konfirmasi dulu sebelum menjawab?</label>
+    <select id="konfirmasi">
+      <option>Ya</option>
+      <option selected>Tidak</option>
+    </select>
+
+    <button type="button" onclick="generatePrompt()">? Buat Prompt</button>
+    <button type="button" onclick="copyPrompt()">?? Copy</button>
+    <button type="button" onclick="downloadPrompt()">?? Download (.txt)</button>
+    <button type="button" onclick="resetForm()">??? Reset Semua</button>
+  </form>
+
+  <div id="output"></div>
+
+  <script>
+    const fields = ['topik', 'tujuan', 'gaya', 'format', 'bahasa', 'tingkat', 'tambahan', 'harapan', 'konfirmasi'];
+
+    // Load saved
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      el.value = localStorage.getItem(id) || '';
+      el.addEventListener('input', () => localStorage.setItem(id, el.value));
+    });
+
+    // Gambar handling
+    const gambar = document.getElementById('gambar');
+    const preview = document.getElementById('preview');
+    gambar.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          preview.innerHTML = `<img src="${ev.target.result}" alt="preview" />`;
+          localStorage.setItem('gambarBase64', ev.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    const savedImage = localStorage.getItem('gambarBase64');
+    if (savedImage) preview.innerHTML = `<img src="${savedImage}" alt="preview" />`;
+
+    // Generate
+    function generatePrompt() {
+      const v = {};
+      fields.forEach(id => v[id] = document.getElementById(id).value.trim());
+      const txt = `
+?? **Prompt Otomatis Dibuat Berdasarkan Preferensimu**
+
+1?? **Topik utama:** ${v.topik}
+2?? **Tujuan utama:** ${v.tujuan}
+3?? **Gaya penjelasan:** ${v.gaya}
+4?? **Format hasil:** ${v.format}
+5?? **Bahasa & nada:** ${v.bahasa}
+6?? **Tingkat kedalaman:** ${v.tingkat}
+7?? **Tambahan khusus:** ${v.tambahan}
+8?? **Harapan akhir hasil:** ${v.harapan}
+9?? **Konfirmasi dulu?:** ${v.konfirmasi}
+
+?? **Instruksi ke ChatGPT:**
+> Buatkan hasil akhir sesuai semua isian di atas.  
+> Jika ada bagian yang tidak jelas, ajukan pertanyaan sebelum menjawab.  
+> Hasil akhir harus lengkap, akurat, praktis, dan langsung bisa digunakan.
+      `.trim();
+      document.getElementById('output').textContent = txt;
+    }
+
+    // Copy
+    function copyPrompt() {
+      const out = document.getElementById('output').textContent;
+      if (!out) return alert('Buat prompt dulu!');
+      navigator.clipboard.writeText(out);
+      alert('Prompt berhasil disalin ??');
+    }
+
+    // Download
+    function downloadPrompt() {
+      const out = document.getElementById('output').textContent;
+      if (!out) return alert('Buat prompt dulu!');
+      const blob = new Blob([out], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'prompt-output.txt';
+      a.click();
+    }
+
+    // Reset
+    function resetForm() {
+      if (!confirm('Yakin ingin hapus semua isian?')) return;
+      fields.forEach(id => {
+        localStorage.removeItem(id);
+        document.getElementById(id).value = '';
+      });
+      localStorage.removeItem('gambarBase64');
+      preview.innerHTML = '';
+      document.getElementById('output').textContent = '';
+    }
+
+    // Theme
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+      localStorage.setItem('theme', mode);
+    }
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+  </script>
+</body>
+</html>
